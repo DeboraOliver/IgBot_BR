@@ -70,7 +70,7 @@ targets = ['influenciadoradesucesso', 'escoladeinfluencers', 'influencianegra', 
 for target in targets:
     # digitar o  nome que quero na pagina de pesquisa
     searchbox = driver.find_element_by_xpath('//*[@id="react-root"]/section/nav/div[2]/div/div/div[2]/div/div')
-    serchbox.send_keys(target)
+    searchbox.send_keys(target)
     # pressionar o enter
 
     # ir até o final da página
