@@ -1,112 +1,106 @@
-'''Let's play around with seleniumpackage to access our page'''
-
-
-import time, random, os, csv, datetime
+import itertools
+from explicit import waiter, XPATH
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from time import sleep
+import time, random, os, csv, datetime
 from selenium.webdriver.common.keys import Keys
 
-print("\nBem-vinda! Vamos começar?! \n")
-dirpath = os.getcwd()
-print("current directory is : " + dirpath)
-chromepath = dirpath + '/assets/chromedriver.exe'
 
-driver = webdriver.Chrome(executable_path=chromepath)
+def login(driver, account):
+    driver.get ('https://instagram.com')
+    time.sleep (random.uniform (5, 7))
 
-driver.get('https://instagram.com')
+    # information
+    archive = open ('important.txt', 'r')
+    token = archive.read ()
 
-# username
-usernamebox = driver.find_element_by_xpath(
-    '//*[@id="react-root"]/section/main/article/div[2]/div[1]/div/form/div[2]/div/label/input')
-usernamebox.send_keys('dina_agencia_digital')
-# senha
-passwordbox = driver.find_element_by_xpath(
-    '//*[@id="react-root"]/section/main/article/div[2]/div[1]/div/form/div[3]/div/label/input')
-passwordbox.send_keys('Ig123456!')
-# clicar no botão loging
-loginbutton = driver.find_element_by_xpath('//*[@id="react-root"]/section/main/article/div[2]/div[1]/div/form/div[4]')
-loginbutton.click()
+    # username
+    username = driver.find_element_by_xpath (
+        '//*[@id="react-root"]/section/main/article/div[2]/div[1]/div/form/div[2]/div/label/input')
+    username.send_keys (account)
 
-time.sleep(random.uniform(1.5, 3.5))
+    # senha
+    password = driver.find_element_by_xpath (
+        '//*[@id="react-root"]/section/main/article/div[2]/div[1]/div/form/div[3]/div/label/input')
+    password.send_keys (token)
+    # clicar no botão loging
+    submit = driver.find_element_by_xpath ('//*[@id="react-root"]/section/main/article/div[2]/div[1]/div/form/div[4]')
+    submit.click ()
+    time.sleep (random.uniform (5, 7))
 
-
-# ir ao final da página
-def load_page(self, sleep=1):
-    scroll_page = 0
-    while scroll_page < 4000:
-        self.browser.execute_script("window.scrollTo(0," + str(scroll_page) + " );")
-        scroll_page += 200
-        print('rolagem ok!')
-        time.sleep(sleep)
+    # Wait for the user dashboard page to load
+    WebDriverWait (driver, 15).until (EC.presence_of_element_located ((By.LINK_TEXT, "See All")))
 
 
-# ir no meu perfil
-myprofile = driver.find_element_by_xpath('//*[@id="react-root"]/section/nav/div[2]/div/div/div[3]/div/div[4]/a/img')
-myprofile.click()
-print('Profile ok')
-time.sleep(random.uniform(2.5, 4.5))
+def list_followers(driver, account):
+    # profile
+    driver.get ("https://www.instagram.com/{0}/".format (account))
+    time.sleep (random.uniform (1.5, 2))
+    # Followers
 
-# lista seguidores
-my_followers_button = driver.find_element_by_xpath('//*[@id="react-root"]/section/main/div/header/section/ul/li[2]/a')
-my_followers_button.click()
-print('seguidores  ok')
-my_followers = []
-my_followers = driver.find_element_by_xpath('/html/body/div[4]/div/div[2]')
-print(my_followers)
+    allfoll = int (driver.find_element_by_xpath ("//li[2]/a/span").text)
+    driver.find_element_by_partial_link_text ("follower").click ()
 
-# listar quem seguimos
+    time.sleep (random.uniform (1.5, 2))
+    trick_css = "ul div li:nth-child({}) a.notranslate"  # Taking advange of CSS's nth-child functionality
 
-# na minha ultima postagem pegar os likes e visitar duas pessoas
+    wait = WebDriverWait (driver, 20)
 
-# voltar a minha página inicial
-firstpage = driver.find_element_by_xpath(
-    '//*[@id="react-root"]/section/nav/div[2]/div/div/div[3]/div/div[1]/div/a/svg/path')
-firstpage.click()
+    for group in itertools.count (start=1, step=12):
+        for follower_index in range (group, group + 12):
+            if follower_index > allfoll:
+                raise StopIteration
+            yield waiter.find_element (driver, trick_css.format (follower_index)).text
 
-# listar as pessoas que quero seguir
-targets = ['influenciadoradesucesso', 'escoladeinfluencers', 'influencianegra', 'empreendedorinfluencer',
-           'empreendedorasbrilhantes']
+            # followers.append(waiter.find_element(driver, trick_css.format(follower_index)).text)
+        # https://stackoverflow.com/questions/37233803/how-to-web-scrape-followers-from-instagram-web-browser
+        # Instagram loads followers 12 at a time. Find the last follower element
+        # and scroll it into view, forcing instagram to load another 12
+        # Even though we just found this elem in the previous for loop, there can
+        # potentially be large amount of time between that call and this one,
+        # and the element might have gone stale. Lets just re-acquire it to avoid
+        # that
+        last_follower = waiter.find_element (driver, trick_css.format (group + 11))
+        driver.execute_script ("arguments[0].scrollIntoView();", last_follower)
 
-'''GRANDE LOOP'''
-for target in targets:
-    # digitar o  nome que quero na pagina de pesquisa
-    searchbox = driver.find_element_by_xpath('//*[@id="react-root"]/section/nav/div[2]/div/div/div[2]/div/div')
-    searchbox.send_keys(target)
-    # pressionar o enter
 
-    # ir até o final da página
-    driver.execute_script("window.scrollTo(0,2*127)")
-    time.sleep(random.uniform(2.5, 3.5))
 
-# olhar a última postagem
-last_post = driver.find_element_by_xpath(
-    '//*[@id="react-root"]/section/main/div/div[3]/article/div[1]/div/div[1]/div[1]/a/div/div[2]')
-last_post.click()
-time.sleep(random.uniform(4.5, 6))
+if __name__ == "__main__":
 
-last_post_likers = driver.find_element_by_xpath(
-    '/html/body/div[4]/div[2]/div/article/div[2]/section[2]/div/div[2]/button')
-last_post_likers.click()
-time.sleep(random.uniform(1.5, 2))
+    account = 'dina_agencia_digital'
 
-# listar quem deu like na ultima foto da pessoa
-target_followers = []
+    print ('\nBem-vinda! Entrando na conta "{}" \n'.format (account))
+    dirpath = os.getcwd ()
+    print ("current directory is : " + dirpath)
+    chromepath = dirpath + '/assets/chromedriver.exe'
 
-'''SEGUNDO GRANDE LOOP'''
-# visitar quem deu like
-# SE perfil private == ADD
-# SE SEM FOTO == NEXT
-# SE NUMERO DE POSTS <=5 == NEXT
-# SE numero de followers >=5000 NEXT
-# SE Numero de followers <=100 DAR LIKE E COMENTAR
-# dar like
-# escrever comentário
-# add
+    # retiraras notificações
+    chrome_options = webdriver.ChromeOptions ()
+    prefs = {"profile.default_content_setting_values.notifications": 2}
+    chrome_options.add_experimental_option ("prefs", prefs)
+    driver = webdriver.Chrome (executable_path=chromepath, options=chrome_options)
+
+    followers = []
+    following = []
+
+    try:
+        login (driver, account)
+
+        # print ('\nSeguidores da conta "{}" : \n'.format (account))
+        for follower in list_followers (driver, account=account):
+            # print(follower)
+            followers.append (follower)
+
+    finally:
+        print ('\n A conta {} tem {} seguidores'.format (account, len (followers)))
+
+        print ('\n Os seus seguidores são: {}'.format (followers))
+        driver.quit ()
 
 
 
 
-#
 
-# with webdriver.Firefox() as driver:
-#   wait = WebDriverWait(driver, 10)
-#  driver.get("https://google.com/ncr")
