@@ -8,17 +8,21 @@ from time import sleep
 import time, random, os, csv, datetime
 from selenium.webdriver.common.keys import Keys
 import Comments
+import interacting
 
 def liking(self):
     # conta alvo: uma lista de contas que pegamos nos likers de  outras instituições
-    with open ('alvo.txt') as f:
-        alvo = [line.rstrip () for line in f]
-        print(alvo)
+    #with open ('alvo.txt') as f:
+     #   alvo = [line.rstrip () for line in f]
+      #  print(alvo)
 
     # acessar uma a uma
-    for potencial_user in alvo:
+    for potencial_user in self.cleaned_targets:
         self.driver.get ("https://www.instagram.com/{}/".format (potencial_user))
         time.sleep (random.uniform (5, 7))
+
+        interacting.scrolling(self)
+
         #entrar na página pessoal
 
         # Ultima foto do feed
@@ -30,7 +34,7 @@ def liking(self):
         # quantos likes vamos dar
         amei = 0
 
-        while amei < 3:
+        while amei < 4:
             # liking
             like = self.driver.find_element_by_xpath ('/html/body/div[4]/div[2]/div/article/div[3]/section[1]/span[1]/button')
             like.click ()
@@ -40,8 +44,8 @@ def liking(self):
 
 
             # COMMENT
-            if amei % 2 == 0 and amei != 0:
-                Comments.commenting(self)
+            #if amei % 2 == 0 and amei != 0:
+             #   Comments.commenting(self)
 
             # PROXIMA FOTO
             next = self.driver.find_element_by_partial_link_text ('Next')

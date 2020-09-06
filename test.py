@@ -9,6 +9,7 @@ import time, random, os, csv, datetime
 from selenium.webdriver.common.keys import Keys
 import Like as lk
 import targets
+import interacting
 
 
 class IgBot:
@@ -30,8 +31,6 @@ class IgBot:
         self.login()
 
     def login(self):
-
-
 
         self.driver.get('https://instagram.com')
         time.sleep(random.uniform(5, 7))
@@ -62,6 +61,9 @@ class IgBot:
 
         self.driver.get ("https://www.instagram.com/{0}/".format (self.account))
         time.sleep (random.uniform (5, 7))
+        interacting.scrolling(self)
+        interacting.explore_tag(self)
+
 
         # LIKERS
         #lk.liking(self)

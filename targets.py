@@ -9,7 +9,10 @@ from time import sleep
 import time, random, os, csv, datetime
 from selenium.webdriver.common.keys import Keys
 import urllib.request, json
-from flatten_json import flatten 
+from flatten_json import flatten
+import interacting
+import Like
+import Comments
 
 def get_targets(self):
     # conta alvo: uma lista de contas que pegamos nos likers de  outras instituições
@@ -40,10 +43,7 @@ def get_targets(self):
         for group in itertools.count(start=1, step=12):
             for follower_index in range(group, group + 12):
                 if follower_index > allfoll:
-                    # # Load account page
-                    #self.driver.get ("https://www.instagram.com/{}/".format (account))
-                    #time.sleep (random.uniform (5, 7))
-                    continue
+                    raise StopIteration #TEM ERRO AQUI
                     #time.sleep (random.uniform (5, 7))
                 yield waiter.find_element(self.driver, trick_css.format(follower_index)).text
             last_follower = waiter.find_element(self.driver, trick_css.format(group + 11))
@@ -55,6 +55,11 @@ def cleanse(self):
 
     print('Entrei no target')
     followers = []
+    # uma nova lista
+    self.cleaned_targets = []
+    self.private_account = []
+    cleaned_targets = 0
+    private_account = 0
 
     try:
         get_targets(self)
@@ -63,6 +68,21 @@ def cleanse(self):
         for follower in get_targets(self):
             #print(follower)
             followers.append(follower)
+            with urllib.request.urlopen ("https://www.instagram.com/{}/?__a=1".format(follower)) as url:
+                data = json.loads (url.read ().decode ())
+                flat_json = flatten (data)
+                #print ("Estou checando o json api de cada seguidor")
+                #checar se já é nosso seguidor
+                if (flat_json.get("graphql_user_follows_viewer")==False) and (flat_json.get("graphql_user_followed_by_viewer")==False):
+                    if (flat_json.get("graphql_user_edge_followed_by_count")<999) and (flat_json.get("graphql_user_is_private")==False):
+                        if not flat_json.get ("graphql_user_requested_by_viewer"):
+                            self.cleaned_targets.append(follower)
+                            cleaned_targets += 1
+                            print("Nossos futuros seguidores: {}".format(cleaned_targets))
+                elif (flat_json.get("graphql_is_private")==True) and (flat_json.get("graphql_user_edge_followed_by_count")<999):
+                            self.private_account.append(follower)
+                            private_account += 1
+                            print ("Número de contas privadas: {}".format(private_account))
 
 
     finally:
@@ -70,26 +90,9 @@ def cleanse(self):
 
         print('\n Os seus seguidores são: {}'.format(followers))
 
+        print("Há {} pessoas para interagir : {}".format(len(self.cleaned_targets), self.cleaned_targets))
+        print("Há {} contas privadas: {}".format(len(self.private_account), self.private_account))
 
-        for user in followers:
-            with urllib.request.urlopen ("https://www.instagram.com/{}/?__a=1".format(user)) as url:
-                data = json.loads (url.read ().decode ())
-                teste = flatten (data)
-                print ("Estou checando o json api de cada seguidor")
+def like_each(self):
+    Like.liking(self)
 
-                #uma nova lista
-                cleaned_targets =[]
-                private_account=[]
-                #checar se já é nosso seguidor
-                if (teste.get("graphql_user_follows_viewer")==False) and (teste.get("graphql_user_followed_by_viewer")==False):
-                    if (teste.get("graphql_user_edge_followed_by_count")<999) and (teste.get("graphql_user_is_private")==False):
-                        if not teste.get ("graphql_user_requested_by_viewer"):
-                            cleaned_targets.append(user)
-                elif (teste.get("graphql_user_is_private")==True) and (teste.get("graphql_user_profile_pic_url")!= None):
-                            private_account.append(user)
-
-        print("Há {} pessoas para interagir : {}".format(len(cleaned_targets), cleaned_targets))
-        print("Há {} contas privadas: {}".format(len(private_account), private_account))
-
-            #checar se a conta é privada
-            #checar se a pessoa tem foto de perfil (não é fake)
