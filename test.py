@@ -7,9 +7,10 @@ from selenium.webdriver.common.by import By
 from time import sleep
 import time, random, os, csv, datetime
 from selenium.webdriver.common.keys import Keys
-import Like as lk
+import report
 import targets
 import interacting
+import unfollowing
 
 
 class IgBot:
@@ -61,14 +62,20 @@ class IgBot:
 
         self.driver.get ("https://www.instagram.com/{0}/".format (self.account))
         time.sleep (random.uniform (5, 7))
+
         interacting.scrolling(self)
         interacting.explore_tag(self)
 
+        #reporting
+        report.colhendo_infos(self)
 
-        # LIKERS
-        #lk.liking(self)
-        print('era p o cleanse começar')
+        interacting.explore_tag (self)
+
+        #limpando a conta
+        unfollowing.cleanse (self)
+
         targets.cleanse(self)
+
 
 if __name__ == "__main__":
 

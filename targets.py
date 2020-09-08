@@ -43,7 +43,7 @@ def get_targets(self):
         for group in itertools.count(start=1, step=12):
             for follower_index in range(group, group + 12):
                 if follower_index > allfoll:
-                    raise StopIteration #TEM ERRO AQUI
+                    break #TEM ERRO AQUI
                     #time.sleep (random.uniform (5, 7))
                 yield waiter.find_element(self.driver, trick_css.format(follower_index)).text
             last_follower = waiter.find_element(self.driver, trick_css.format(group + 11))
@@ -71,15 +71,15 @@ def cleanse(self):
             with urllib.request.urlopen ("https://www.instagram.com/{}/?__a=1".format(follower)) as url:
                 data = json.loads (url.read ().decode ())
                 flat_json = flatten (data)
-                #print ("Estou checando o json api de cada seguidor")
+
                 #checar se já é nosso seguidor
-                if (flat_json.get("graphql_user_follows_viewer")==False) and (flat_json.get("graphql_user_followed_by_viewer")==False):
-                    if (flat_json.get("graphql_user_edge_followed_by_count")<999) and (flat_json.get("graphql_user_is_private")==False):
+                if (flat_json.get("graphql_user_edge_followed_by_count")<999) and (flat_json.get("graphql_user_edge_owner_to_timeline_media_count")>3):
+                    if (flat_json.get ("graphql_user_follows_viewer") == False) and (flat_json.get ("graphql_user_followed_by_viewer") == False):
                         if not flat_json.get ("graphql_user_requested_by_viewer"):
                             self.cleaned_targets.append(follower)
                             cleaned_targets += 1
                             print("Nossos futuros seguidores: {}".format(cleaned_targets))
-                elif (flat_json.get("graphql_is_private")==True) and (flat_json.get("graphql_user_edge_followed_by_count")<999):
+                elif (flat_json.get("graphql_user_is_private")==True) and (flat_json.get("graphql_user_edge_followed_by_count")<999):
                             self.private_account.append(follower)
                             private_account += 1
                             print ("Número de contas privadas: {}".format(private_account))
